@@ -9,6 +9,8 @@
     "MixinFMLHandshakeHandler",
     "MixinNetworkFilters",
     "MixinNetworkManager",
+    "NetworkConstantsAccessor",
+    "NetworkRegistryAccessor",
     "VanillaPacketFilterAccessor"
   ],
   "client": []
