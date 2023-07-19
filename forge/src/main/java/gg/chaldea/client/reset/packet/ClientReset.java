@@ -105,7 +105,7 @@ public class ClientReset {
 		NetworkHooks.registerClientLoginChannel(connection);
 		connection.setProtocol(ConnectionProtocol.LOGIN);
 		connection.setListener(new ClientHandshakePacketListenerImpl(
-				connection, Minecraft.getInstance(), null, statusMessage -> {}
+				connection, Minecraft.getInstance(), null, statusMessage -> {}//FIXME
 		));
 		Minecraft.getInstance().pendingConnection = connection;
 		context.setPacketHandled(true);
@@ -130,14 +130,14 @@ public class ClientReset {
 
 			// Preserve
 			ServerData serverData = Minecraft.getInstance().getCurrentServer();
-			Pack serverPack = Minecraft.getInstance().getClientPackSource().serverPack;
+			Pack serverPack = Minecraft.getInstance().getDownloadedPackSource().serverPack;
 
 			// Clear
 			if (Minecraft.getInstance().level == null) {
 				// Ensure the GameData is reverted in case the client is reset during the handshake.
 				GameData.revertToFrozen();
 			}
-			Minecraft.getInstance().getClientPackSource().serverPack = null;
+			Minecraft.getInstance().getDownloadedPackSource().serverPack = null;
 
 			// Clear
 			Minecraft.getInstance().clearLevel(new GenericDirtMessageScreen(Component.literal("Negotiating..."/*"connect.negotiating"*/)));
@@ -150,8 +150,8 @@ public class ClientReset {
 			} catch (NoSuchElementException ignored) {
 			}
 			// Restore
-			Minecraft.getInstance().getClientPackSource().serverPack = serverPack;
-			Minecraft.getInstance().setCurrentServer(serverData);
+			Minecraft.getInstance().getDownloadedPackSource().serverPack = serverPack;
+			Minecraft.getInstance().setCurrentServer(serverData);//FIXME
 		});
 
 		logger.debug(RESETMARKER, "Waiting for clear to complete");
