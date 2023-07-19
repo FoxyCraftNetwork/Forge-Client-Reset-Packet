@@ -19,8 +19,8 @@ public interface NetworkConstantsAccessor {
         throw new AssertionError();
     }
 
-    @Accessor("FML_CONNECTION_DATA")
-    static AttributeKey<ConnectionData> getFmlConnectionData() {
+    @Accessor("FML_MOD_MISMATCH_DATA")
+    static AttributeKey<ConnectionData.ModMismatchData> getFmlConnectionData() {
         throw new AssertionError();
     }
 }

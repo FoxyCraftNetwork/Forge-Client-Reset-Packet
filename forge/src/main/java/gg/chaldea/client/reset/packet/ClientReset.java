@@ -2,6 +2,7 @@ package gg.chaldea.client.reset.packet;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -140,7 +141,14 @@ public class ClientReset {
 
 			// Clear
 			Minecraft.getInstance().clearLevel(new GenericDirtMessageScreen(Component.literal("Negotiating..."/*"connect.negotiating"*/)));
-
+			try {
+				context.getNetworkManager().channel().pipeline().remove("forge:forge_fixes");
+			} catch (NoSuchElementException ignored) {
+			}
+			try {
+				context.getNetworkManager().channel().pipeline().remove("forge:vanilla_filter");
+			} catch (NoSuchElementException ignored) {
+			}
 			// Restore
 			Minecraft.getInstance().getClientPackSource().serverPack = serverPack;
 			Minecraft.getInstance().setCurrentServer(serverData);

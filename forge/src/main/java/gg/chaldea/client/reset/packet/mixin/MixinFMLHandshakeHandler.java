@@ -2,12 +2,11 @@ package gg.chaldea.client.reset.packet.mixin;
 
 import com.google.common.collect.Maps;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundDisconnectPacket;
 import net.minecraft.network.protocol.login.ClientboundLoginDisconnectPacket;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.network.*;
 import net.minecraftforge.registries.ForgeRegistry;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.spongepowered.asm.mixin.Final;
@@ -39,13 +38,14 @@ public class MixinFMLHandshakeHandler {
     @Overwrite(remap = false)
     void handleServerModListOnClient(HandshakeMessages.S2CModList serverModList, Supplier<NetworkEvent.Context> c) {
         LOGGER.debug(FMLHSMARKER, "Logging into server with mod list [{}]", String.join(", ", serverModList.getModList()));
+        final Map<ResourceLocation, String> mismatchedChannels = NetworkRegistryAccessor.callValidateServerChannels(serverModList.getChannels());
         c.get().setPacketHandled(true);
         NetworkConstantsAccessor.getHandshakeChannel().reply(new HandshakeMessages.C2SModListReply(), c.get());
         LOGGER.debug(FMLHSMARKER, "Accepted server connection");
         // Set the modded marker on the channel so we know we got packets
         c.get().getNetworkManager().channel().attr(NetworkConstantsAccessor.getFmlNetversion()).set(NetworkConstants.NETVERSION);
         c.get().getNetworkManager().channel().attr(NetworkConstantsAccessor.getFmlConnectionData())
-                .set(new ConnectionData.ModMismatchData(serverModList.getModList(), serverModList.getChannels())); //FIXME
+                .set(ConnectionData.ModMismatchData.channel(mismatchedChannels,NetworkHooks.getConnectionData(c.get().getNetworkManager()), true)); //FIXME
 
         this.registriesToReceive = new HashSet<>(serverModList.getRegistries());
         this.registrySnapshots = Maps.newHashMap();
@@ -60,12 +60,12 @@ public class MixinFMLHandshakeHandler {
     void handleClientModListOnServer(HandshakeMessages.C2SModListReply clientModList, Supplier<NetworkEvent.Context> c) {
         LOGGER.debug(FMLHSMARKER, "Received client connection with modlist [{}]", String.join(", ", clientModList.getModList()));
         final Map<ResourceLocation, String> mismatchedChannels = NetworkRegistryAccessor.callValidateServerChannels(clientModList.getChannels());
-        c.get().getNetworkManager().channel().attr(NetworkConstantsAccessor.getFmlConnectionData()).set(new FMLConnectionData(clientModList.getModList(), clientModList.getChannels())); //FIXME
+        c.get().getNetworkManager().channel().attr(NetworkConstantsAccessor.getFmlConnectionData()).set(ConnectionData.ModMismatchData.channel(mismatchedChannels,NetworkHooks.getConnectionData(c.get().getNetworkManager()), false));
         c.get().setPacketHandled(true);
         if (!mismatchedChannels.isEmpty()) {
             LOGGER.error(FMLHSMARKER, "Terminating connection with client, mismatched mod list");
             c.get().getNetworkManager().send(new ClientboundLoginDisconnectPacket(Component.literal("Connection closed - mismatched mod channel list")));
-            ((NetworkEvent.Context)c.get()).getNetworkManager().disconnect(Component.literal("Connection closed - mismatched mod channel list"));
+            c.get().getNetworkManager().disconnect(Component.literal("Connection closed - mismatched mod channel list"));
         } else {
             LOGGER.debug(FMLHSMARKER, "Accepted client connection mod list");
         }
