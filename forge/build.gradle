@@ -34,7 +34,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.2-43.1.7'
+    minecraft 'net.minecraftforge:forge:1.19.2-43.2.21'
     compileOnly 'org.spongepowered:mixin:0.8.3-SNAPSHOT'
     compileOnly 'org.spongepowered:mixin:0.8.3-SNAPSHOT:processor'
 
