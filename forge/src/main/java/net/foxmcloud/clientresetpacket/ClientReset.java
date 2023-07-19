@@ -104,7 +104,7 @@ public class ClientReset {
 		connection.setListener(new ClientHandshakePacketListenerImpl(
 				connection, Minecraft.getInstance(), null, statusMessage -> {}
 		));
-
+		Minecraft.getInstance().pendingConnection = connection;
 		context.setPacketHandled(true);
 		try {
 			handshakeChannel.reply(
