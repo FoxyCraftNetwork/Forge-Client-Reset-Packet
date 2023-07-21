@@ -151,7 +151,7 @@ public class ClientReset {
 			}
 			// Restore
 			Minecraft.getInstance().getDownloadedPackSource().serverPack = serverPack;
-			Minecraft.getInstance().setCurrentServer(serverData);//FIXME
+//			Minecraft.getInstance().setCurrentServer(serverData);//FIXME
 		});
 
 		logger.debug(RESETMARKER, "Waiting for clear to complete");
