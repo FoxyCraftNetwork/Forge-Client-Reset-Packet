@@ -101,11 +101,11 @@ public class ClientReset {
 		if (!handleClear(context)) {
 			return;
 		}
-
+		ServerData serverData = Minecraft.getInstance().getCurrentServer();
 		NetworkHooks.registerClientLoginChannel(connection);
 		connection.setProtocol(ConnectionProtocol.LOGIN);
 		connection.setListener(new ClientHandshakePacketListenerImpl(
-				connection, Minecraft.getInstance(), null, null,true,null,statusMessage -> {}
+				connection, Minecraft.getInstance(),serverData, null,true,null,statusMessage -> {}
 		));//Watch This might cause issues Nulling things IDK what do lol and setting true what i dont know is???? Will Find out!
 		Minecraft.getInstance().pendingConnection = connection;
 		context.setPacketHandled(true);
