@@ -135,7 +135,7 @@ public class ClientReset {
 			}
 
 			// Clear
-			Minecraft.getInstance().clearLevel(new GenericDirtMessageScreen(new TextComponent("Negotiating..."/*"connect.negotiating"*/)));
+			Minecraft.getInstance().clearLevel(new GenericDirtMessageScreen(new TranslationTextComponent("connect.negotiating")));
 
 			// Restore
 			Minecraft.getInstance().setCurrentServer(serverData);
