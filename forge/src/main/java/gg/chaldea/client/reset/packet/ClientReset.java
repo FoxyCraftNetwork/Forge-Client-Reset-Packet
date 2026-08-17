@@ -97,6 +97,7 @@ public class ClientReset {
 		}
 
 		logger.info(RESETMARKER, "Received reset packet from server.");
+		VoiceChatReset.disconnect();
 
 		if (!handleClear(context)) {
 			return;
