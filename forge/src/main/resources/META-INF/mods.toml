@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet/issue
 
 [[mods]]
 modId="clientresetpacket"
-version="0.4.0"
+version="0.4.1"
 displayName="Client Reset Packet"
 displayURL="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"
 credits="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"

@@ -1,15 +1,20 @@
 package gg.chaldea.client.reset.packet;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 final class VoiceChatReset {
     private static final String CLIENT_MANAGER = "de.maxhenkel.voicechat.voice.client.ClientManager";
     private static final String CLIENT_VOICECHAT = "de.maxhenkel.voicechat.voice.client.ClientVoicechat";
+    private static final AtomicBoolean RESETTING = new AtomicBoolean();
 
     private VoiceChatReset() {
     }
 
     static void disconnect() {
+        if (!RESETTING.compareAndSet(false, true)) {
+            return;
+        }
         try {
             Class<?> managerType = Class.forName(CLIENT_MANAGER);
             Object manager = managerType.getMethod("instance").invoke(null);
@@ -24,6 +29,10 @@ final class VoiceChatReset {
         } catch (LinkageError error) {
             // A different/incompatible SVC build must never crash the client reset.
             ClientReset.logger.debug(ClientReset.RESETMARKER, "Simple Voice Chat client reset is incompatible", error);
+        } finally {
+            // The SVC client has been fully detached. The next Minecraft PLAY
+            // connection will create a fresh client through its normal join hook.
+            RESETTING.set(false);
         }
     }
 
