@@ -23,6 +23,6 @@ subprojects {
         group = 'build'
         from(layout.buildDirectory.file("libs/neoforge-${project.version}.jar"))
         into(rootProject.file('release'))
-        rename { String filename -> "${rootProject.name}-${project.version}-neoforge-1.21.4.jar" }
+        rename { String filename -> "${rootProject.name}-${project.version}-neoforge-1.21.8.jar" }
     }
 }
