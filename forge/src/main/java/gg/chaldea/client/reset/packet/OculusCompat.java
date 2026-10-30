@@ -64,7 +64,7 @@ public final class OculusCompat {
 
 	private static void toast(String messageKey) {
 		try {
-			SystemToast.addOrUpdate(Minecraft.getInstance().getToasts(), TOAST,
+			SystemToast.addOrUpdate(Minecraft.getInstance().getToastManager(), TOAST,
 					Component.translatable("clientresetpacket.toast.title"), Component.translatable(messageKey));
 		} catch (RuntimeException ignored) {
 			// Purely informational.
