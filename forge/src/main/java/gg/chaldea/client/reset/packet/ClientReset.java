@@ -6,19 +6,18 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 /**
- * Client Reset Packet for Minecraft 1.21.1 (Forge 52.x).
+ * Client Reset Packet for Minecraft 1.21.7 (Forge 57.x).
  *
  * <p>Up to 1.20.1 a proxy had to send a custom "reset" login packet so that the Forge client would tear down its
  * session and run the FML handshake again for the next backend server. Since 1.20.2 Minecraft has a vanilla
  * configuration phase and the proxy can send {@code ClientboundStartConfigurationPacket} to move the client back
- * into it, where Forge 52 runs its whole handshake (mod list, channels, registry sync, config sync) as
+ * into it, where Forge (52+) runs its whole handshake (mod list, channels, registry sync, config sync) as
  * configuration tasks. Velocity does this natively, so the reset packet is no longer needed.</p>
  *
  * <p>What vanilla re-configuration does not do is the client-side cleanup Forge performs on a real disconnect
@@ -36,7 +35,7 @@ public class ClientReset {
 		// Client-side only: never require it on the server, and never mark servers as incompatible.
 		context.registerExtensionPoint(IExtensionPoint.DisplayTest.class, IExtensionPoint.DisplayTest.IGNORE_ALL_VERSION);
 		if (FMLEnvironment.dist == Dist.CLIENT) {
-			MinecraftForge.EVENT_BUS.register(OculusCompat.class);
+			OculusCompat.register();
 		}
 	}
 }

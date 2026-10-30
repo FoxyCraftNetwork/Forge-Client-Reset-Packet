@@ -1,6 +1,6 @@
 modLoader="javafml"
-loaderVersion="[52,)"
-license="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/blob/1.21.1/LICENSE"
+loaderVersion="[56,)"
+license="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/blob/1.21.7/LICENSE"
 issueTrackerURL="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/issues"
 
 [[mods]]
@@ -19,13 +19,13 @@ On Minecraft 1.20.2+ the proxy switches servers through the vanilla configuratio
 [[dependencies.clientresetpacket]]
     modId="forge"
     mandatory=true
-    versionRange="[52,)"
+    versionRange="[56,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.clientresetpacket]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.21.1,1.21.2)"
+    versionRange="[1.21.6,1.22)"
     ordering="NONE"
     side="BOTH"
