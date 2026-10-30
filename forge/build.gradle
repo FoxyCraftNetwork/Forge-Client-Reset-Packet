@@ -12,7 +12,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 
 minecraft {
-    mappings channel: 'official', version: '1.21.1'
+    mappings channel: 'official', version: '1.21.5'
     copyIdeResources = true
     reobf = false // Forge 1.20.6+ runs on Mojang (official) names at runtime
 
@@ -46,7 +46,7 @@ sourceSets.each {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.21.1-52.1.20'
+    minecraft 'net.minecraftforge:forge:1.21.5-55.1.18'
 }
 
 // No mixin refmap: Forge 1.20.6+ runs on Mojang's official names, so the mixin targets below are already the

@@ -13,7 +13,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 /**
- * Client Reset Packet for Minecraft 1.21.1 (Forge 52.x).
+ * Client Reset Packet for Minecraft 1.21.5 (Forge 55.x).
  *
  * <p>Up to 1.20.1 a proxy had to send a custom "reset" login packet so that the Forge client would tear down its
  * session and run the FML handshake again for the next backend server. Since 1.20.2 Minecraft has a vanilla
