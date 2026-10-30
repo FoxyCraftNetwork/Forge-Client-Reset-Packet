@@ -5,11 +5,11 @@ subprojects {
     group = 'net.foxmcloud.clientresetpacket'
     version = '0.4.0'
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+    java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
-        options.release = 21
+        options.release = 17
     }
 
     repositories {
@@ -22,7 +22,7 @@ subprojects {
         into('../release/')
         include '*.jar'
         rename { String filename ->
-            filename.replace("forge-${project.version}.jar", "${rootProject.name}-${project.version}-1.21.1.jar")
+            filename.replace("forge-${project.version}.jar", "${rootProject.name}-${project.version}-1.20.4.jar")
         }
     }
 }

@@ -11,7 +11,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.ForgeEventFactoryClient;
+import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.ConnectionType;
 import net.minecraftforge.network.NetworkContext;
@@ -58,7 +58,7 @@ public final class ReconfigurationReset {
 		OculusCompat.beforeClear();
 		// Forge fires this from Minecraft#disconnect but not from clearClientLevel.
 		try {
-			ForgeEventFactoryClient.firePlayerLogout(mc.gameMode, mc.player);
+			ForgeHooksClient.firePlayerLogout(mc.gameMode, mc.player);
 		} catch (RuntimeException e) {
 			ClientReset.logger.error(ClientReset.RESETMARKER, "A mod threw while handling the logout event for the server switch", e);
 		}
@@ -107,9 +107,13 @@ public final class ReconfigurationReset {
 			clear(ctx, "sentChannels");
 			clear(ctx, "modList");
 			clear(ctx, "channelList");
-			Field size = NetworkContext.class.getDeclaredField("remoteChannelsSize");
-			size.setAccessible(true);
-			size.setLong(ctx, 0L);
+			try {
+				// Only some Forge builds track this counter (missing on e.g. 56.x/57.x/59.x).
+				Field size = NetworkContext.class.getDeclaredField("remoteChannelsSize");
+				size.setAccessible(true);
+				size.setLong(ctx, 0L);
+			} catch (NoSuchFieldException ignored) {
+			}
 			Field mismatch = NetworkContext.class.getDeclaredField("mismatchData");
 			mismatch.setAccessible(true);
 			mismatch.set(ctx, null);
