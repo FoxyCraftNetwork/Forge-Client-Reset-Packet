@@ -3,6 +3,7 @@
         "description": {
             "translate": "clientresetpacket.pack.description"
         },
-        "pack_format": 34
+        "pack_format": 34,
+        "supported_formats": [32, 34]
     }
 }

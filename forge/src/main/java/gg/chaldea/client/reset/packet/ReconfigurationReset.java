@@ -19,7 +19,7 @@ import net.minecraftforge.registries.GameData;
 
 /**
  * Makes a vanilla re-configuration (the way proxies switch servers on 1.20.2+) clean up the client the same way
- * a real disconnect does on Forge 52.
+ * a real disconnect does on Forge 50, 51 and 52 (Minecraft 1.20.6 - 1.21.1).
  *
  * <p>When the proxy sends {@code ClientboundStartConfigurationPacket}, vanilla calls
  * {@code Minecraft#clearClientLevel}. Forge only hooks {@code Minecraft#disconnect}, so on a server switch:</p>
@@ -34,7 +34,7 @@ import net.minecraftforge.registries.GameData;
  *     the client never sends {@code minecraft:register} to the new backend, and a switch from a modded to a
  *     vanilla backend still counts as "modded" (server configs are not reset to their defaults).</li>
  * </ul>
- * <p>This is the 1.21.1 equivalent of what the old reset packet did when it cleared the client before
+ * <p>This is the 1.20.6 - 1.21.1 equivalent of what the old reset packet did when it cleared the client before
  * re-running the FML handshake.</p>
  */
 @OnlyIn(Dist.CLIENT)
@@ -58,9 +58,28 @@ public final class ReconfigurationReset {
 		OculusCompat.beforeClear();
 		// Forge fires this from Minecraft#disconnect but not from clearClientLevel.
 		try {
-			ForgeEventFactoryClient.firePlayerLogout(mc.gameMode, mc.player);
+			try {
+				ForgeEventFactoryClient.firePlayerLogout(mc.gameMode, mc.player);
+			} catch (NoSuchMethodError | NoClassDefFoundError missing) {
+				// Older Forge 50 builds still had the hook on ForgeHooksClient.
+				legacyLogout(mc);
+			}
 		} catch (RuntimeException e) {
 			ClientReset.logger.error(ClientReset.RESETMARKER, "A mod threw while handling the logout event for the server switch", e);
+		}
+	}
+
+	private static void legacyLogout(Minecraft mc) {
+		try {
+			for (Method m : Class.forName("net.minecraftforge.client.ForgeHooksClient").getMethods()) {
+				if (m.getName().equals("firePlayerLogout") && m.getParameterCount() == 2) {
+					m.invoke(null, mc.gameMode, mc.player);
+					return;
+				}
+			}
+			ClientReset.logger.warn(ClientReset.RESETMARKER, "No logout hook found on this Forge build; skipping the logout event");
+		} catch (ReflectiveOperationException | LinkageError e) {
+			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not fire the logout event on this Forge build", e);
 		}
 	}
 
