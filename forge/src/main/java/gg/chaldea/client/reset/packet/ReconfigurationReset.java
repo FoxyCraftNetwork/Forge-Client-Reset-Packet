@@ -19,7 +19,7 @@ import net.minecraftforge.registries.GameData;
 
 /**
  * Makes a vanilla re-configuration (the way proxies switch servers on 1.20.2+) clean up the client the same way
- * a real disconnect does on Forge 52.
+ * a real disconnect does on Forge 52+.
  *
  * <p>When the proxy sends {@code ClientboundStartConfigurationPacket}, vanilla calls
  * {@code Minecraft#clearClientLevel}. Forge only hooks {@code Minecraft#disconnect}, so on a server switch:</p>
@@ -107,9 +107,13 @@ public final class ReconfigurationReset {
 			clear(ctx, "sentChannels");
 			clear(ctx, "modList");
 			clear(ctx, "channelList");
-			Field size = NetworkContext.class.getDeclaredField("remoteChannelsSize");
-			size.setAccessible(true);
-			size.setLong(ctx, 0L);
+			try {
+				// Only some Forge builds track this counter (missing on e.g. 56.x/57.x/59.x).
+				Field size = NetworkContext.class.getDeclaredField("remoteChannelsSize");
+				size.setAccessible(true);
+				size.setLong(ctx, 0L);
+			} catch (NoSuchFieldException ignored) {
+			}
 			Field mismatch = NetworkContext.class.getDeclaredField("mismatchData");
 			mismatch.setAccessible(true);
 			mismatch.set(ctx, null);
