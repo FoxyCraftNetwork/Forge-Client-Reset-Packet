@@ -99,28 +99,51 @@ public final class ReconfigurationReset {
 	/** Puts the connection's Forge network state back to what a fresh connection starts with. */
 	private static void resetNetworkContext(Connection connection) {
 		NetworkContext ctx = NetworkContext.get(connection);
-		try {
+		// Every member is optional and reset on its own: Forge builds differ in which ones exist (e.g.
+		// remoteChannelsSize only exists in some 52.x builds), and one missing member must not stop the rest.
+		int done = 0;
+		done += step("setConnectionType", () -> {
 			Method setType = NetworkContext.class.getDeclaredMethod("setConnectionType", ConnectionType.class);
 			setType.setAccessible(true);
 			setType.invoke(ctx, ConnectionType.VANILLA);
-			clear(ctx, "remoteChannels");
-			clear(ctx, "sentChannels");
-			clear(ctx, "modList");
-			clear(ctx, "channelList");
-			try {
-				// Only some Forge builds track this counter (missing on e.g. 56.x/57.x/59.x).
-				Field size = NetworkContext.class.getDeclaredField("remoteChannelsSize");
-				size.setAccessible(true);
-				size.setLong(ctx, 0L);
-			} catch (NoSuchFieldException ignored) {
-			}
+		});
+		for (String name : new String[] {"remoteChannels", "sentChannels", "modList", "channelList"}) {
+			done += step(name, () -> clear(ctx, name));
+		}
+		done += step("remoteChannelsSize", () -> {
+			Field size = NetworkContext.class.getDeclaredField("remoteChannelsSize");
+			size.setAccessible(true);
+			size.setLong(ctx, 0L);
+		});
+		done += step("mismatchData", () -> {
 			Field mismatch = NetworkContext.class.getDeclaredField("mismatchData");
 			mismatch.setAccessible(true);
 			mismatch.set(ctx, null);
-		} catch (ReflectiveOperationException | RuntimeException e) {
+		});
+		if (done == 0) {
 			// Not fatal: registries were already reverted, the next server just may not see our channel list.
-			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not reset Forge's network context; channel registration with the new server may be incomplete", e);
+			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not reset any of Forge's network context; channel registration with the new server may be incomplete");
+		} else {
+			ClientReset.logger.debug(ClientReset.RESETMARKER, "Reset {} of 8 Forge network context members", done);
 		}
+	}
+
+	@FunctionalInterface
+	private interface ResetStep {
+		void run() throws ReflectiveOperationException;
+	}
+
+	/** Runs one reset step; returns 1 if it worked, 0 if the member doesn't exist on this Forge build or failed. */
+	private static int step(String member, ResetStep step) {
+		try {
+			step.run();
+			return 1;
+		} catch (NoSuchFieldException | NoSuchMethodException e) {
+			ClientReset.logger.debug(ClientReset.RESETMARKER, "NetworkContext.{} doesn't exist on this Forge build; skipping it", member);
+		} catch (ReflectiveOperationException | RuntimeException e) {
+			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not reset NetworkContext.{}", member, e);
+		}
+		return 0;
 	}
 
 	private static void clear(NetworkContext ctx, String name) throws ReflectiveOperationException {
