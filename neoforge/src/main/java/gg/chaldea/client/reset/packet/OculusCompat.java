@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.DisconnectedScreen;
-import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.Component;
@@ -110,6 +109,19 @@ public final class OculusCompat {
 		}
 	}
 
+	/**
+	 * The "loading terrain" screen is ReceivingLevelScreen up to 1.21.8 and LevelLoadingScreen from 1.21.9. Compare by
+	 * name (Mojang names at runtime) so one jar works on both sides of that rename.
+	 */
+	private static boolean isLevelLoadingScreen(Object screen) {
+		if (screen == null) {
+			return false;
+		}
+		String name = screen.getClass().getName();
+		return name.equals("net.minecraft.client.gui.screens.ReceivingLevelScreen")
+				|| name.equals("net.minecraft.client.gui.screens.LevelLoadingScreen");
+	}
+
 	/** Re-enable once the player has been in the new world for a moment. */
 	@SubscribeEvent
 	public static void onClientTick(ClientTickEvent.Post event) {
@@ -117,7 +129,7 @@ public final class OculusCompat {
 			return;
 		}
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.level == null || mc.player == null || mc.getConnection() == null || mc.screen instanceof ReceivingLevelScreen) {
+		if (mc.level == null || mc.player == null || mc.getConnection() == null || isLevelLoadingScreen(mc.screen)) {
 			ticksInWorld = 0;
 			return;
 		}
