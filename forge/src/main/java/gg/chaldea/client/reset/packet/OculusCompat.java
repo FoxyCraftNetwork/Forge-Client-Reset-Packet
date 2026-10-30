@@ -1,6 +1,8 @@
 package gg.chaldea.client.reset.packet;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.function.Consumer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
@@ -12,7 +14,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
@@ -159,9 +164,46 @@ public final class OculusCompat {
 		return false;
 	}
 
-	/** Re-enable once the player has been in the new world for a moment. */
-	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
+	private static final String CLIENT_TICK = "net.minecraftforge.event.TickEvent$ClientTickEvent";
+
+	/**
+	 * Registers the client tick listener without a hard reference to {@code TickEvent.ClientTickEvent.Post}, which
+	 * only exists from Forge 50.1.5 / 51.0.4 (all of 52.x has it). Older builds only have the phased
+	 * {@code ClientTickEvent}, where we act on phase END, which is the same point in the tick as Post.
+	 * Nothing in this class may name the Post type in a signature: {@code EVENT_BUS.register(OculusCompat.class)}
+	 * reflects over every method, and a missing parameter type would fail mod construction.
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	static void registerTickListener() {
+		ClassLoader loader = OculusCompat.class.getClassLoader();
+		try {
+			Class post = Class.forName(CLIENT_TICK + "$Post", false, loader);
+			MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, (Class<Event>) post, (Consumer<Event>) event -> onClientTick());
+			ClientReset.logger.debug(ClientReset.RESETMARKER, "Listening to ClientTickEvent.Post");
+			return;
+		} catch (ClassNotFoundException | LinkageError e) {
+			// Pre-50.1.5 / pre-51.0.4 Forge: fall through to the phased event.
+		}
+		try {
+			Class legacy = Class.forName(CLIENT_TICK, false, loader);
+			Field phase = TickEvent.class.getField("phase");
+			MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, (Class<Event>) legacy, (Consumer<Event>) event -> {
+				try {
+					if ("END".equals(((Enum<?>) phase.get(event)).name())) {
+						onClientTick();
+					}
+				} catch (IllegalAccessException ignored) {
+				}
+			});
+			ClientReset.logger.debug(ClientReset.RESETMARKER, "Listening to ClientTickEvent (phase END)");
+		} catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+			// Shaders then come back on the title/disconnected screen or at shutdown, not after landing.
+			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not register a client tick listener on this Forge build", e);
+		}
+	}
+
+	/** Re-enable once the player has been in the new world for a moment. Called at the end of every client tick. */
+	private static void onClientTick() {
 		if (!restorePending) {
 			return;
 		}

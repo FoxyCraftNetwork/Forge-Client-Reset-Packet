@@ -44,6 +44,7 @@ public class ClientReset {
 		registerDisplayTest();
 		if (FMLEnvironment.dist == Dist.CLIENT) {
 			MinecraftForge.EVENT_BUS.register(OculusCompat.class);
+			OculusCompat.registerTickListener();
 		}
 	}
 
