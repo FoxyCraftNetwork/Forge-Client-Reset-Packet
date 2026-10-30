@@ -22,7 +22,7 @@ subprojects {
         into('../release/')
         include '*.jar'
         rename { String filename ->
-            filename.replace("forge-${project.version}.jar", "${rootProject.name}-${project.version}-1.21.1.jar")
+            filename.replace("forge-${project.version}.jar", "${rootProject.name}-${project.version}-1.21.10.jar")
         }
     }
 }

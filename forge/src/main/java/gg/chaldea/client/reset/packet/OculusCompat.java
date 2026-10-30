@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.DisconnectedScreen;
-import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.Component;
@@ -13,7 +12,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
  * Soft-dependency bridge to Oculus / Iris shaders.
@@ -44,6 +42,12 @@ public final class OculusCompat {
 	private OculusCompat() {
 	}
 
+	/** EventBus 7 (Forge 1.21.6+): listeners are registered per event on each event's own BUS. */
+	static void register() {
+		TickEvent.ClientTickEvent.Post.BUS.addListener(OculusCompat::onClientTick);
+		ScreenEvent.Opening.BUS.addListener(OculusCompat::onScreenOpening);
+	}
+
 	private static boolean present() {
 		if (present == null) {
 			try {
@@ -64,7 +68,7 @@ public final class OculusCompat {
 
 	private static void toast(String messageKey) {
 		try {
-			SystemToast.addOrUpdate(Minecraft.getInstance().getToasts(), TOAST,
+			SystemToast.addOrUpdate(Minecraft.getInstance().getToastManager(), TOAST,
 					Component.translatable("clientresetpacket.toast.title"), Component.translatable(messageKey));
 		} catch (RuntimeException ignored) {
 			// Purely informational.
@@ -110,14 +114,26 @@ public final class OculusCompat {
 		}
 	}
 
+	/**
+	 * The "loading terrain" screen is ReceivingLevelScreen up to 1.21.8 and LevelLoadingScreen from 1.21.9. Compare by
+	 * name (Mojang names at runtime on 1.20.6+) so one jar works on both sides of that rename.
+	 */
+	private static boolean isLevelLoadingScreen(Object screen) {
+		if (screen == null) {
+			return false;
+		}
+		String name = screen.getClass().getName();
+		return name.equals("net.minecraft.client.gui.screens.ReceivingLevelScreen")
+				|| name.equals("net.minecraft.client.gui.screens.LevelLoadingScreen");
+	}
+
 	/** Re-enable once the player has been in the new world for a moment. */
-	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
+	static void onClientTick(TickEvent.ClientTickEvent.Post event) {
 		if (!restorePending) {
 			return;
 		}
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.level == null || mc.player == null || mc.getConnection() == null || mc.screen instanceof ReceivingLevelScreen) {
+		if (mc.level == null || mc.player == null || mc.getConnection() == null || isLevelLoadingScreen(mc.screen)) {
 			ticksInWorld = 0;
 			return;
 		}
@@ -127,8 +143,7 @@ public final class OculusCompat {
 	}
 
 	/** If the switch failed and the player ended up back in the menus, put shaders back right away. */
-	@SubscribeEvent
-	public static void onScreenOpening(ScreenEvent.Opening event) {
+	static void onScreenOpening(ScreenEvent.Opening event) {
 		if (restorePending && (event.getNewScreen() instanceof TitleScreen
 				|| event.getNewScreen() instanceof JoinMultiplayerScreen
 				|| event.getNewScreen() instanceof DisconnectedScreen)) {
