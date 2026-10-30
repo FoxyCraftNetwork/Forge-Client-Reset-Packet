@@ -19,7 +19,7 @@ On Minecraft 1.20.2+ the proxy switches servers through the vanilla configuratio
 [[dependencies.clientresetpacket]]
     modId="forge"
     mandatory=true
-    versionRange="[52,)"
+    versionRange="[52.1.0,)"
     ordering="NONE"
     side="BOTH"
 
