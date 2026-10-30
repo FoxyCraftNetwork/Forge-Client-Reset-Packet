@@ -5,11 +5,14 @@ import java.lang.reflect.Modifier;
 
 import io.netty.util.AttributeKey;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.ClientHooks;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.network.filters.NetworkFilters;
 import net.neoforged.neoforge.network.registration.ChannelAttributes;
 import net.neoforged.neoforge.registries.RegistryManager;
@@ -18,10 +21,11 @@ import net.neoforged.neoforge.registries.RegistryManager;
  * Makes a vanilla re-configuration (the way proxies switch servers on 1.20.2+) leave the NeoForge client in the same
  * state as a fresh connection, so the next backend can be NeoForge, another modded server, or plain vanilla/Paper.
  *
- * <p>On {@code ClientboundStartConfigurationPacket} vanilla calls {@code Minecraft#clearClientLevel}; NeoForge's patch
- * of that method fires {@code LevelEvent.Unload}, but everything below only happens on {@code Minecraft#disconnect}
- * or on a brand-new {@link Connection}:</p>
+ * <p>On {@code ClientboundStartConfigurationPacket} vanilla calls {@code Minecraft#clearClientLevel}. Everything below
+ * only happens on {@code Minecraft#disconnect} or on a brand-new {@link Connection}:</p>
  * <ul>
+ *     <li>{@code LevelEvent.Unload} for the old client level (NeoForge 21.1 fired it from clearClientLevel, 21.2+ no
+ *     longer does).</li>
  *     <li>{@code ClientPlayerNetworkEvent.LoggingOut} (NeoForge resets WORLD-scoped config caches here, other mods
  *     drop per-server state).</li>
  *     <li>{@link RegistryManager#revertToFrozen()}: otherwise the previous NeoForge server's registry snapshot (numeric
@@ -38,11 +42,27 @@ import net.neoforged.neoforge.registries.RegistryManager;
 @OnlyIn(Dist.CLIENT)
 public final class ReconfigurationReset {
 
+	/** True between {@link #beforeClear} and {@link #afterClear} (render thread only). */
+	private static boolean resetting;
+
 	private ReconfigurationReset() {
+	}
+
+	/** Render thread, inside clearClientLevel after the screen change, while the old level is still set. */
+	public static void onLevelClosing(ClientLevel level) {
+		if (!resetting || level == null) {
+			return;
+		}
+		try {
+			NeoForge.EVENT_BUS.post(new LevelEvent.Unload(level));
+		} catch (RuntimeException e) {
+			ClientReset.logger.error(ClientReset.RESETMARKER, "A mod threw while handling the level unload event for the server switch", e);
+		}
 	}
 
 	/** Render thread, right before {@code Minecraft#clearClientLevel} during re-configuration. */
 	public static void beforeClear(Minecraft mc, Connection connection) {
+		resetting = true;
 		ClientReset.logger.info(ClientReset.RESETMARKER, "Server asked the client to re-configure (proxy server switch); resetting client state.");
 		// Shaders off before the level and render pipeline are torn down (issues #3/#12).
 		OculusCompat.beforeClear();
@@ -64,6 +84,8 @@ public final class ReconfigurationReset {
 		} catch (RuntimeException | LinkageError e) {
 			ClientReset.logger.error(ClientReset.RESETMARKER, "Failed to reset the client for the server switch, closing connection", e);
 			connection.disconnect(Component.translatable("clientresetpacket.disconnect.reset_failed"));
+		} finally {
+			resetting = false;
 		}
 	}
 

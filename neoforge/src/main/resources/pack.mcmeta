@@ -1,8 +1,0 @@
-{
-    "pack": {
-        "description": {
-            "translate": "clientresetpacket.pack.description"
-        },
-        "pack_format": 34
-    }
-}
