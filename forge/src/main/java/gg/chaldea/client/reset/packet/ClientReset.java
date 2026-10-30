@@ -9,11 +9,11 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 /**
- * Client Reset Packet for Minecraft 1.21.1 (Forge 52.x).
+ * Client Reset Packet for Minecraft 1.20.2 (Forge 48.x).
  *
  * <p>Up to 1.20.1 a proxy had to send a custom "reset" login packet so that the Forge client would tear down its
  * session and run the FML handshake again for the next backend server. Since 1.20.2 Minecraft has a vanilla
@@ -32,9 +32,10 @@ public class ClientReset {
 	static final Logger logger = LogManager.getLogger();
 	static final Marker RESETMARKER = MarkerManager.getMarker("RESETPACKET").setParents(MarkerManager.getMarker("FMLNETWORK"));
 
-	public ClientReset(FMLJavaModLoadingContext context) {
+	public ClientReset() {
 		// Client-side only: never require it on the server, and never mark servers as incompatible.
-		context.registerExtensionPoint(IExtensionPoint.DisplayTest.class, IExtensionPoint.DisplayTest.IGNORE_ALL_VERSION);
+		ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class,
+				() -> new IExtensionPoint.DisplayTest(() -> "ANY", (remote, isServer) -> true));
 		if (FMLEnvironment.dist == Dist.CLIENT) {
 			MinecraftForge.EVENT_BUS.register(OculusCompat.class);
 		}

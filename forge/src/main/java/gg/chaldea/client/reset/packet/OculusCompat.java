@@ -34,7 +34,7 @@ public final class OculusCompat {
 	private static final String[] IRIS_MAIN = {"net.irisshaders.iris.Iris", "net.coderbot.iris.Iris"};
 	/** Ticks to wait in the new world before turning shaders back on (lets chunks/registries settle). */
 	private static final int RESTORE_DELAY_TICKS = 40;
-	private static final SystemToast.SystemToastId TOAST = new SystemToast.SystemToastId(4000L);
+	private static final SystemToast.SystemToastIds TOAST = SystemToast.SystemToastIds.PERIODIC_NOTIFICATION;
 
 	private static Boolean present;
 	private static volatile boolean restorePending;
@@ -112,8 +112,8 @@ public final class OculusCompat {
 
 	/** Re-enable once the player has been in the new world for a moment. */
 	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
-		if (!restorePending) {
+	public static void onClientTick(TickEvent.ClientTickEvent event) {
+		if (!restorePending || event.phase != TickEvent.Phase.END) {
 			return;
 		}
 		Minecraft mc = Minecraft.getInstance();

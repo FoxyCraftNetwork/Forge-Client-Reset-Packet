@@ -3,6 +3,7 @@
   "minVersion": "0.8",
   "package": "gg.chaldea.client.reset.packet.mixin",
   "compatibilityLevel": "JAVA_17",
+  "refmap": "mixins.clientresetpacket.refmap.json",
   "mixins": [],
   "client": [
     "MixinClientPacketListener",
