@@ -24,13 +24,13 @@ config="mixins.clientresetpacket.json"
 [[dependencies.clientresetpacket]]
     modId="neoforge"
     type="required"
-    versionRange="[21.0,)"
+    versionRange="[21.1.6,)"
     ordering="NONE"
     side="CLIENT"
 
 [[dependencies.clientresetpacket]]
     modId="minecraft"
     type="required"
-    versionRange="[1.21,1.21.2)"
+    versionRange="[1.21.1,1.21.2)"
     ordering="NONE"
     side="CLIENT"
