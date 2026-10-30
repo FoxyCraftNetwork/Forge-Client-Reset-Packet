@@ -2,7 +2,9 @@
 
 Client-side Forge mod that makes server switches behind a proxy (Velocity + Ambassador/PCF) work like a clean reconnect.
 
-## Minecraft 1.21.1 (Forge 52.x) — branch `1.21.1`
+## Minecraft 1.21.2 – 1.21.5 (Forge 53 / 54 / 55), one jar — branch `port/1.21.5`
+
+Forge has no 1.21.2 release, so in practice this jar runs on 1.21.3 (Forge 53+), 1.21.4 (Forge 54+) and 1.21.5 (Forge 55+).
 
 Since Minecraft 1.20.2 the proxy no longer needs a custom reset packet: Velocity switches servers by sending the
 vanilla "start configuration" packet, and Forge runs its whole handshake (mod list, channels, registry sync, config
@@ -10,7 +12,7 @@ sync) in the configuration phase again for the new backend. Backend servers stil
 [Proxy-Compatible-Forge](https://github.com/adde0109/Proxy-Compatible-Forge) (modern forwarding + modded command
 arguments). Ambassador is only for 1.13–1.20.1.
 
-What vanilla re-configuration does not do is the client cleanup Forge performs on a real disconnect. On 1.21.1 this
+What vanilla re-configuration does not do is the client cleanup Forge performs on a real disconnect. This
 mod adds it when the proxy switches servers:
 
 - fires `ClientPlayerNetworkEvent.LoggingOut` and `LevelEvent.Unload` for the old server/level (Forge only fires

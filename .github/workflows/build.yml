@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build (forge 1.21.5)
+    name: Build (forge 1.21.2-1.21.5)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,6 +31,6 @@ jobs:
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
-          name: ForgeClientResetPacket-forge-1.21.5
+          name: ForgeClientResetPacket-forge-1.21.2-1.21.5
           path: release/*.jar
           if-no-files-found: error
