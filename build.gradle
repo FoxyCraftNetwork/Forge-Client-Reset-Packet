@@ -1,6 +1,9 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.148' apply false
+}
+
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'maven-publish'
 
     group = 'net.foxmcloud.clientresetpacket'
     version = '0.4.0'
@@ -18,11 +21,8 @@ subprojects {
 
     tasks.register('versionedRelease', Copy) {
         group = 'build'
-        from('./build/libs/forge-' + project.version + '.jar')
-        into('../release/')
-        include '*.jar'
-        rename { String filename ->
-            filename.replace("forge-${project.version}.jar", "${rootProject.name}-${project.version}-1.21.1.jar")
-        }
+        from(layout.buildDirectory.file("libs/neoforge-${project.version}.jar"))
+        into(rootProject.file('release'))
+        rename { String filename -> "${rootProject.name}-${project.version}-neoforge-1.21.1.jar" }
     }
 }

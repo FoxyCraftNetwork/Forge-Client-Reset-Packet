@@ -84,3 +84,4 @@ nb-configuration.xml
 # Dev run directories
 run/
 forge/run/
+neoforge/run/

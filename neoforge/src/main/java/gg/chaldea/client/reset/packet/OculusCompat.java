@@ -9,11 +9,11 @@ import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /**
  * Soft-dependency bridge to Oculus / Iris shaders.
@@ -23,8 +23,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  * on the render thread, through Iris' public API ({@code net.irisshaders.iris.api.v0}), so we never link
  * against a shader mod at compile time and do nothing when none is installed.
  *
- * On Forge 1.21.1 there is no official Oculus build; unofficial ports (e.g. "ForgeOculus") ship the same
- * Iris API. Detection is by the API class rather than a mod id so any port that ships it works.
+ * On NeoForge this is Iris itself (Iris ships NeoForge builds). Detection is by the Iris API class rather than a
+ * mod id, so ports that ship the same API work too.
  */
 @OnlyIn(Dist.CLIENT)
 public final class OculusCompat {
@@ -112,7 +112,7 @@ public final class OculusCompat {
 
 	/** Re-enable once the player has been in the new world for a moment. */
 	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
+	public static void onClientTick(ClientTickEvent.Post event) {
 		if (!restorePending) {
 			return;
 		}
