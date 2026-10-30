@@ -1,7 +1,7 @@
 apply plugin: 'net.neoforged.moddev'
 
 neoForge {
-    version = '21.3.100'
+    version = '21.4.161'
 
     runs {
         client {
