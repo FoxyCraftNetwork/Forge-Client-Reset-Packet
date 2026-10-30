@@ -26,6 +26,9 @@ import net.minecraftforge.fml.ModList;
 public final class OculusCompat {
 
 	private static final String IRIS_API = "net.irisshaders.iris.api.v0.IrisApi";
+	private static final String IRIS_API_CONFIG = "net.irisshaders.iris.api.v0.IrisApiConfig";
+	/** Failed re-enable attempts before giving up (the shutdown hook still writes the setting back). */
+	private static final int MAX_RESTORE_ATTEMPTS = 3;
 	// Iris main class moved packages between Oculus 1.6.x and 1.7+/1.8.
 	private static final String[] IRIS_MAIN = {"net.irisshaders.iris.Iris", "net.coderbot.iris.Iris"};
 	/** Ticks to wait in the new world before turning shaders back on (lets chunks/registries settle). */
@@ -33,6 +36,7 @@ public final class OculusCompat {
 
 	private static volatile boolean restorePending;
 	private static int ticksInWorld;
+	private static int restoreAttempts;
 	private static boolean shutdownHookAdded;
 
 	private OculusCompat() {
@@ -48,6 +52,19 @@ public final class OculusCompat {
 		return api.getMethod("getConfig").invoke(instance);
 	}
 
+	/** Look methods up on the public IrisApiConfig interface, not on the (internal, possibly non-public) impl class. */
+	private static Method configMethod(String name, Class<?>... params) throws ReflectiveOperationException {
+		return Class.forName(IRIS_API_CONFIG).getMethod(name, params);
+	}
+
+	private static boolean shadersEnabled(Object config) throws ReflectiveOperationException {
+		return (boolean) configMethod("areShadersEnabled").invoke(config);
+	}
+
+	private static void setShadersEnabledAndApply(Object config, boolean enabled) throws ReflectiveOperationException {
+		configMethod("setShadersEnabledAndApply", boolean.class).invoke(config, enabled);
+	}
+
 	/** Must be called on the render thread, before Minecraft#clearLevel. */
 	static void beforeClear() {
 		if (!present() || restorePending) {
@@ -55,15 +72,16 @@ public final class OculusCompat {
 		}
 		try {
 			Object config = apiConfig();
-			boolean enabled = (boolean) config.getClass().getMethod("areShadersEnabled").invoke(config);
+			boolean enabled = shadersEnabled(config);
 			if (!enabled) {
 				return;
 			}
 			ClientReset.logger.info(ClientReset.RESETMARKER, "Oculus shaders are on; turning them off for the server switch");
 			restorePending = true;
 			ticksInWorld = 0;
+			restoreAttempts = 0;
 			addShutdownHook();
-			config.getClass().getMethod("setShadersEnabledAndApply", boolean.class).invoke(config, false);
+			setShadersEnabledAndApply(config, false);
 		} catch (ClassNotFoundException ignored) {
 			// Oculus without the Iris API (very old build): nothing we can do.
 		} catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
@@ -71,19 +89,50 @@ public final class OculusCompat {
 		}
 	}
 
-	/** Render thread only. Re-enables shaders if we turned them off. */
+	/**
+	 * Re-enables shaders if we turned them off. Callable from any thread (e.g. Forge's handshake opens
+	 * DisconnectedScreen on the Netty thread): the actual work is always handed to the render thread.
+	 * restorePending is only cleared once the restore succeeded, the player took over, or we gave up.
+	 */
 	private static void restore() {
 		if (!restorePending) {
 			return;
 		}
-		restorePending = false;
+		Minecraft mc = Minecraft.getInstance();
+		if (!mc.isSameThread()) {
+			mc.execute(OculusCompat::restore);
+			return;
+		}
 		try {
 			Object config = apiConfig();
-			config.getClass().getMethod("setShadersEnabledAndApply", boolean.class).invoke(config, true);
-			ClientReset.logger.info(ClientReset.RESETMARKER, "Oculus shaders turned back on after the server switch");
+			if (shadersEnabled(config)) {
+				// Shaders are no longer off as we left them: the player changed the setting during the switch.
+				restorePending = false;
+				ClientReset.logger.info(ClientReset.RESETMARKER, "Shaders were re-enabled during the server switch; leaving them as they are");
+				return;
+			}
+			setShadersEnabledAndApply(config, true);
+			restorePending = false;
+			ClientReset.logger.info(ClientReset.RESETMARKER, "Shaders turned back on after the server switch");
 		} catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not re-enable Oculus shaders after the reset", e);
+			ticksInWorld = 0;
+			if (++restoreAttempts >= MAX_RESTORE_ATTEMPTS) {
+				restorePending = false;
+				ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not re-enable shaders after the server switch; giving up", e);
+			} else {
+				ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not re-enable shaders after the server switch; will retry", e);
+			}
 		}
+	}
+
+	/** The player opened the shader pack screen during the switch: they decide, we no longer restore. */
+	private static boolean playerTookOver(Minecraft mc) {
+		if (mc.screen != null && mc.screen.getClass().getName().endsWith("ShaderPackScreen")) {
+			restorePending = false;
+			ClientReset.logger.info(ClientReset.RESETMARKER, "Shader settings opened during the server switch; leaving shaders to the player");
+			return true;
+		}
+		return false;
 	}
 
 	/** Re-enable once the player has been in the new world for a moment. */
@@ -93,6 +142,9 @@ public final class OculusCompat {
 			return;
 		}
 		Minecraft mc = Minecraft.getInstance();
+		if (playerTookOver(mc)) {
+			return;
+		}
 		if (mc.level == null || mc.player == null || mc.getConnection() == null || mc.screen instanceof ReceivingLevelScreen) {
 			ticksInWorld = 0;
 			return;
