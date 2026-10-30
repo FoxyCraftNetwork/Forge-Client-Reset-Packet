@@ -23,6 +23,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.ConnectionProtocol;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint.DisplayTest;
@@ -30,6 +31,7 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.network.HandshakeHandler;
 import net.minecraftforge.network.HandshakeMessages;
@@ -53,6 +55,9 @@ public class ClientReset {
 	public ClientReset() {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		bus.addListener(ClientReset::init);
+		if (FMLEnvironment.dist == Dist.CLIENT) {
+			MinecraftForge.EVENT_BUS.register(OculusCompat.class);
+		}
 		ModLoadingContext.get().registerExtensionPoint(DisplayTest.class, () -> new DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
 	}
 
@@ -138,6 +143,9 @@ public class ClientReset {
 				GameData.revertToFrozen();
 			}
 			Minecraft.getInstance().getDownloadedPackSource().serverPack = null;
+
+			// Oculus: switch shaders off on the render thread before the level is cleared, back on once in the new world (issues #3/#12)
+			OculusCompat.beforeClear();
 
 			// Clear
 			Minecraft.getInstance().clearLevel(new GenericDirtMessageScreen(Component.translatable("connect.negotiating")));
