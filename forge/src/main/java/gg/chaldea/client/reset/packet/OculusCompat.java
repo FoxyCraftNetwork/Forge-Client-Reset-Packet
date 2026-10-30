@@ -3,24 +3,28 @@ package gg.chaldea.client.reset.packet;
 import java.lang.reflect.Method;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
 
 /**
- * Soft-dependency bridge to Oculus (Iris for Forge).
+ * Soft-dependency bridge to Oculus / Iris shaders.
  *
  * Players reported (issue #3) that switching servers with shaders enabled can fail, while turning shaders
  * off before the switch and back on afterwards always works. This class automates exactly that workaround,
- * on the render thread, through Iris' public API (net.irisshaders.iris.api.v0), so we never link against
- * Oculus at compile time and do nothing when it is not installed.
+ * on the render thread, through Iris' public API ({@code net.irisshaders.iris.api.v0}), so we never link
+ * against a shader mod at compile time and do nothing when none is installed.
+ *
+ * On Forge 1.21.1 there is no official Oculus build; unofficial ports (e.g. "ForgeOculus") ship the same
+ * Iris API. Detection is by the API class rather than a mod id so any port that ships it works.
  */
 @OnlyIn(Dist.CLIENT)
 public final class OculusCompat {
@@ -30,7 +34,9 @@ public final class OculusCompat {
 	private static final String[] IRIS_MAIN = {"net.irisshaders.iris.Iris", "net.coderbot.iris.Iris"};
 	/** Ticks to wait in the new world before turning shaders back on (lets chunks/registries settle). */
 	private static final int RESTORE_DELAY_TICKS = 40;
+	private static final SystemToast.SystemToastId TOAST = new SystemToast.SystemToastId(4000L);
 
+	private static Boolean present;
 	private static volatile boolean restorePending;
 	private static int ticksInWorld;
 	private static boolean shutdownHookAdded;
@@ -39,7 +45,15 @@ public final class OculusCompat {
 	}
 
 	private static boolean present() {
-		return ModList.get() != null && ModList.get().isLoaded("oculus");
+		if (present == null) {
+			try {
+				Class.forName(IRIS_API, false, OculusCompat.class.getClassLoader());
+				present = true;
+			} catch (ClassNotFoundException | LinkageError e) {
+				present = false;
+			}
+		}
+		return present;
 	}
 
 	private static Object apiConfig() throws ReflectiveOperationException {
@@ -48,7 +62,16 @@ public final class OculusCompat {
 		return api.getMethod("getConfig").invoke(instance);
 	}
 
-	/** Must be called on the render thread, before Minecraft#clearLevel. */
+	private static void toast(String messageKey) {
+		try {
+			SystemToast.addOrUpdate(Minecraft.getInstance().getToasts(), TOAST,
+					Component.translatable("clientresetpacket.toast.title"), Component.translatable(messageKey));
+		} catch (RuntimeException ignored) {
+			// Purely informational.
+		}
+	}
+
+	/** Must be called on the render thread, before the client level is cleared. */
 	static void beforeClear() {
 		if (!present() || restorePending) {
 			return;
@@ -59,15 +82,14 @@ public final class OculusCompat {
 			if (!enabled) {
 				return;
 			}
-			ClientReset.logger.info(ClientReset.RESETMARKER, "Oculus shaders are on; turning them off for the server switch");
+			ClientReset.logger.info(ClientReset.RESETMARKER, "Shaders are on; turning them off for the server switch");
 			restorePending = true;
 			ticksInWorld = 0;
 			addShutdownHook();
 			config.getClass().getMethod("setShadersEnabledAndApply", boolean.class).invoke(config, false);
-		} catch (ClassNotFoundException ignored) {
-			// Oculus without the Iris API (very old build): nothing we can do.
+			toast("clientresetpacket.toast.shaders_paused");
 		} catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not pause Oculus shaders for the reset", e);
+			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not pause shaders for the server switch", e);
 		}
 	}
 
@@ -80,16 +102,18 @@ public final class OculusCompat {
 		try {
 			Object config = apiConfig();
 			config.getClass().getMethod("setShadersEnabledAndApply", boolean.class).invoke(config, true);
-			ClientReset.logger.info(ClientReset.RESETMARKER, "Oculus shaders turned back on after the server switch");
+			ClientReset.logger.info(ClientReset.RESETMARKER, "Shaders turned back on after the server switch");
+			toast("clientresetpacket.toast.shaders_restored");
 		} catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not re-enable Oculus shaders after the reset", e);
+			ClientReset.logger.warn(ClientReset.RESETMARKER, "Could not re-enable shaders after the server switch", e);
+			toast("clientresetpacket.toast.shaders_restore_failed");
 		}
 	}
 
 	/** Re-enable once the player has been in the new world for a moment. */
 	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent event) {
-		if (!restorePending || event.phase != TickEvent.Phase.END) {
+	public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
+		if (!restorePending) {
 			return;
 		}
 		Minecraft mc = Minecraft.getInstance();
@@ -113,8 +137,8 @@ public final class OculusCompat {
 	}
 
 	/**
-	 * setShadersEnabledAndApply(false) writes oculus.properties. If the game closes or crashes before we restore,
-	 * write the setting back (file only, no OpenGL) so the player's shaders are not left off.
+	 * setShadersEnabledAndApply(false) writes the shader mod's properties file. If the game closes or crashes before
+	 * we restore, write the setting back (file only, no OpenGL) so the player's shaders are not left off.
 	 */
 	private static void addShutdownHook() {
 		if (shutdownHookAdded) {
@@ -135,6 +159,6 @@ public final class OculusCompat {
 				} catch (Throwable ignored) {
 				}
 			}
-		}, "ClientResetPacket-OculusRestore"));
+		}, "ClientResetPacket-ShaderRestore"));
 	}
 }
