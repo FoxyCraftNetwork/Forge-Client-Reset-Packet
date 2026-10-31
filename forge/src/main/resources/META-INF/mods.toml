@@ -1,15 +1,31 @@
 modLoader="javafml"
-loaderVersion="[46,)"
-license="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet/blob/main/LICENSE"
-issueTrackerURL="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet/issues"
+loaderVersion="[53,)"
+license="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/blob/1.21.5/LICENSE"
+issueTrackerURL="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/issues"
 
 [[mods]]
 modId="clientresetpacket"
-version="0.0.6"
+version="${version}"
 displayName="Client Reset Packet"
-displayURL="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"
-credits="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"
-authors="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"
+displayURL="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet"
+credits="Originally by Just-Chaldea and adde0109; 1.18-1.21 fork by FoxyCraftNetwork"
+authors="Just-Chaldea, adde0109, FoxyCraftNetwork"
 description='''
-Adds a reset packet to Minecraft Forge to allow Modern Forge (1.13+) support on proxies.
+Makes proxy server switches (Velocity and similar) behave like a clean reconnect on modern Forge clients.
+
+On Minecraft 1.20.2+ the proxy switches servers through the vanilla configuration phase. This mod resets the client-side Forge state that a real disconnect would reset (registries, network channel state, logout/level-unload events) and pauses Oculus/Iris shaders across the switch.
 '''
+
+[[dependencies.clientresetpacket]]
+    modId="forge"
+    mandatory=true
+    versionRange="[53,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.clientresetpacket]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.21.2,1.21.6)"
+    ordering="NONE"
+    side="BOTH"
