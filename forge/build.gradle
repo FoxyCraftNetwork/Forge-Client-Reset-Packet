@@ -58,4 +58,11 @@ mixin {
     add sourceSets.main, "mixins.clientresetpacket.refmap.json"
 }
 
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') {
+        expand 'version': project.version
+    }
+}
+
 build.finalizedBy('versionedRelease')

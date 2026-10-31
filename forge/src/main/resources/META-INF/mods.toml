@@ -1,15 +1,29 @@
 modLoader="javafml"
-loaderVersion="[46,)"
-license="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet/blob/main/LICENSE"
-issueTrackerURL="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet/issues"
+loaderVersion="[46,48)"
+license="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/blob/1.20.1/LICENSE"
+issueTrackerURL="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/issues"
 
 [[mods]]
 modId="clientresetpacket"
-version="0.0.6"
+version="${version}"
 displayName="Client Reset Packet"
-displayURL="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"
-credits="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"
-authors="https://github.com/Just-Chaldea/Forge-Client-Reset-Packet"
+displayURL="https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet"
+credits="Originally by Just-Chaldea and adde0109; fork by FoxyCraftNetwork"
+authors="Just-Chaldea, adde0109, FoxyCraftNetwork"
 description='''
 Adds a reset packet to Minecraft Forge to allow Modern Forge (1.13+) support on proxies.
 '''
+
+[[dependencies.clientresetpacket]]
+    modId="forge"
+    mandatory=true
+    versionRange="[46.0.14,48)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.clientresetpacket]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20,1.20.2)"
+    ordering="NONE"
+    side="BOTH"
