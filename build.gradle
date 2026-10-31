@@ -3,25 +3,26 @@ subprojects {
     apply plugin: 'maven-publish'
 
     group = 'net.foxmcloud.clientresetpacket'
-    version = '0.3.1'
+    version = '0.4.0'
 
     java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-    tasks.withType(JavaCompile) {
+    tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
+        options.release = 17
     }
 
     repositories {
         mavenCentral()
     }
 
-    task versionedRelease(type: Copy) {
-        group "build"
+    tasks.register('versionedRelease', Copy) {
+        group = 'build'
         from('./build/libs/forge-' + project.version + '.jar')
         into('../release/')
         include '*.jar'
         rename { String filename ->
-            filename.replace("forge-${project.version}.jar", "${rootProject.name}-${project.version}.jar")
+            filename.replace("forge-${project.version}.jar", "${rootProject.name}-${project.version}-1.20.2.jar")
         }
     }
 }
