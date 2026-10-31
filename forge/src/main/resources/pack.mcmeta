@@ -1,6 +1,9 @@
 {
     "pack": {
-        "description": "Client reset packet",
-        "pack_format": 6
+        "description": {
+            "translate": "clientresetpacket.pack.description"
+        },
+        "pack_format": 34,
+        "supported_formats": [32, 34]
     }
 }

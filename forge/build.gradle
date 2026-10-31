@@ -2,60 +2,70 @@ buildscript {
     repositories {
         maven { url = 'https://maven.minecraftforge.net' }
         mavenCentral()
-        maven {
-            name = 'sponge'
-            url = 'https://repo.spongepowered.org/maven'
-        }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '[6.0.24,6.2)', changing: true
     }
 }
 
 apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'eclipse'
 
-repositories {
-    maven {
-        name = 'spongepowered-repo'
-        url = 'https://repo.spongepowered.org/maven'
-    }
-}
-
 minecraft {
-    mappings channel: 'official', version: '1.20.1'
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    mappings channel: 'official', version: '1.21'
+    copyIdeResources = true
+    reobf = false // Forge 1.20.6+ runs on Mojang (official) names at runtime
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            property 'mixin.debug.verbose', 'true'
+            args '-mixin.config=mixins.clientresetpacket.json'
+            mods {
+                clientresetpacket {
+                    source sourceSets.main
+                }
+            }
+        }
+        client {}
+        server {
+            args '--nogui'
+        }
+    }
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-
+// FG6 dev runs on 1.20.6+: classes and resources have to share one output folder or FML cannot match
+// the mods.toml to the @Mod class.
+sourceSets.each {
+    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
+    it.output.resourcesDir = dir
+    it.java.destinationDirectory = dir
+}
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.1-47.1.37'
-    compileOnly 'org.spongepowered:mixin:0.8.3-SNAPSHOT'
-    compileOnly 'org.spongepowered:mixin:0.8.3-SNAPSHOT:processor'
-
-    annotationProcessor 'org.spongepowered:mixin:0.8.3-SNAPSHOT:processor'
+    minecraft 'net.minecraftforge:forge:1.21-51.0.33'
 }
-sourceSets {
-    main {
-        ext.refMap = "mixins.clientresetpacket.refmap.json"
+
+// No mixin refmap: Forge 1.20.6+ runs on Mojang's official names, so the mixin targets below are already the
+// runtime names. Mixin itself is provided by Forge at runtime and on the compile classpath.
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') {
+        expand 'version': project.version
     }
 }
 
 jar {
     manifest.attributes(
-            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
-            'TweakOrder': 0,
-            'MixinConfigs' : "mixins.clientresetpacket.json"
+            'Specification-Title'     : 'clientresetpacket',
+            'Implementation-Title'    : rootProject.name,
+            'Implementation-Version'  : project.version,
+            'MixinConfigs'            : 'mixins.clientresetpacket.json'
     )
-}
-
-mixin {
-    add sourceSets.main, "mixins.clientresetpacket.refmap.json"
 }
 
 build.finalizedBy('versionedRelease')
