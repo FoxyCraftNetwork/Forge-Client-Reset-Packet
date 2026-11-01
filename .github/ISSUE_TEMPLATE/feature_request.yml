@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest an improvement or support for a Minecraft/Forge version.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This mod supports **Forge only**. NeoForge isn't supported.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      placeholder: e.g. When I switch servers with mod X installed, ...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: input
+    id: mc-version
+    attributes:
+      label: Minecraft and Forge version this is for
+      placeholder: e.g. 1.21.1, Forge 52.1.0
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds you've tried
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Links, screenshots, related issues or mods.
+    validations:
+      required: false

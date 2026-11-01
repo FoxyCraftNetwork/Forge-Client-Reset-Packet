@@ -1,0 +1,119 @@
+name: Bug report
+description: Something broke when switching servers, or the mod crashed or misbehaved.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill in every field so we can reproduce the problem.
+        This mod supports **Forge only**. NeoForge isn't supported.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you report
+      options:
+        - label: I'm using the latest release for my Minecraft version from the [Releases page](https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/releases) or CurseForge.
+          required: true
+        - label: I searched the existing issues and this hasn't been reported yet.
+          required: true
+  - type: dropdown
+    id: mc-version
+    attributes:
+      label: Minecraft version
+      options:
+        - 1.18.x
+        - 1.19.x
+        - 1.20 / 1.20.1
+        - 1.20.2
+        - 1.20.3 / 1.20.4
+        - 1.20.6 – 1.21.1
+        - 1.21.2 – 1.21.5
+        - 1.21.6 – 1.21.11
+        - Other (say which in the description)
+    validations:
+      required: true
+  - type: input
+    id: forge-version
+    attributes:
+      label: Forge version
+      placeholder: e.g. 47.4.0
+    validations:
+      required: true
+  - type: input
+    id: mod-version
+    attributes:
+      label: Mod version
+      description: The version in the jar name, e.g. ForgeClientResetPacket-0.4.0-1.20.6-1.21.1.jar → 0.4.0
+      placeholder: e.g. 0.4.0
+    validations:
+      required: true
+  - type: input
+    id: proxy
+    attributes:
+      label: Proxy (Velocity version)
+      placeholder: e.g. Velocity 3.4.0-SNAPSHOT (build 500)
+    validations:
+      required: true
+  - type: textarea
+    id: backend-mods
+    attributes:
+      label: Proxy-Compatible-Forge (PCF) on the backends
+      description: Which PCF version (or Ambassador on 1.20.1 and older) each backend server runs, and its Forge version.
+      placeholder: |
+        lobby: Forge 47.4.0 + PCF 1.3.1
+        survival: Forge 47.4.0 + PCF 1.3.1
+    validations:
+      required: true
+  - type: textarea
+    id: other-mods
+    attributes:
+      label: Other mods
+      description: Other client mods that might matter, e.g. Simple Voice Chat, Oculus, Embeddium, YSM. A full mod list or modpack name/version helps.
+    validations:
+      required: false
+  - type: dropdown
+    id: side
+    attributes:
+      label: Client or server side
+      description: Where does the problem show up? (This mod only needs to be installed on the client.)
+      options:
+        - Client (game crashes, kicks, freezes, or something wrong after switching)
+        - Server / proxy (errors in the backend or Velocity console)
+        - Both
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Join the proxy on server A
+        2. Run /server B
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      placeholder: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      placeholder: What happened instead? Include the exact kick/disconnect message if there was one.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: latest.log / crash report
+      description: |
+        Drag and drop the client's `logs/latest.log` and any file from `crash-reports/` here, or paste a link to [mclo.gs](https://mclo.gs) / a gist.
+        If you paste the log as text, wrap it in a ```log code block.
+    validations:
+      required: true

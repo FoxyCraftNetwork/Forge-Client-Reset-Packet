@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Latest releases
+    url: https://github.com/FoxyCraftNetwork/Forge-Client-Reset-Packet/releases
+    about: Check you're on the latest release for your Minecraft version before reporting a bug.
