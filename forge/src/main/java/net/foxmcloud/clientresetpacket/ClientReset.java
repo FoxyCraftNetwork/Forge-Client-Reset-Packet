@@ -2,6 +2,7 @@ package net.foxmcloud.clientresetpacket;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -18,8 +19,11 @@ import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.Connection;
 import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.packs.repository.Pack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint.DisplayTest;
@@ -27,6 +31,7 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.network.HandshakeHandler;
 import net.minecraftforge.network.HandshakeMessages;
@@ -50,6 +55,9 @@ public class ClientReset {
 	public ClientReset() {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		bus.addListener(ClientReset::init);
+		if (FMLEnvironment.dist == Dist.CLIENT) {
+			MinecraftForge.EVENT_BUS.register(OculusCompat.class);
+		}
 		ModLoadingContext.get().registerExtensionPoint(DisplayTest.class, () -> new DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
 	}
 
@@ -127,17 +135,33 @@ public class ClientReset {
 
 			// Preserve
 			ServerData serverData = Minecraft.getInstance().getCurrentServer();
+			Pack serverPack = Minecraft.getInstance().getClientPackSource().serverPack;
 
 			// Clear
 			if (Minecraft.getInstance().level == null) {
 				// Ensure the GameData is reverted in case the client is reset during the handshake.
 				GameData.revertToFrozen();
 			}
+			// Keep the server resource pack across the reset (clearLevel would unload it).
+			Minecraft.getInstance().getClientPackSource().serverPack = null;
+
+			// Oculus: switch shaders off on the render thread before the level is cleared, back on once in the new world (issues #3/#12)
+			OculusCompat.beforeClear();
 
 			// Clear
-			Minecraft.getInstance().clearLevel(new GenericDirtMessageScreen(new TranslationTextComponent("connect.negotiating")));
+			Minecraft.getInstance().clearLevel(new GenericDirtMessageScreen(new TranslatableComponent("connect.negotiating")));
+			// Forge re-injects its packet filters during the next handshake; drop the old ones so that doesn't fail.
+			try {
+				context.getNetworkManager().channel().pipeline().remove("forge:forge_fixes");
+			} catch (NoSuchElementException ignored) {
+			}
+			try {
+				context.getNetworkManager().channel().pipeline().remove("forge:vanilla_filter");
+			} catch (NoSuchElementException ignored) {
+			}
 
 			// Restore
+			Minecraft.getInstance().getClientPackSource().serverPack = serverPack;
 			Minecraft.getInstance().setCurrentServer(serverData);
 		});
 
@@ -148,7 +172,7 @@ public class ClientReset {
 			return true;
 		} catch (Exception ex) {
 			logger.error(RESETMARKER, "Failed to clear, closing connection", ex);
-			context.getNetworkManager().disconnect(new TextComponent("Failed to clear, closing connection"));
+			context.getNetworkManager().disconnect(new TranslatableComponent("clientresetpacket.disconnect.reset_failed"));
 			return false;
 		}
 	}

@@ -1,0 +1,8 @@
+{
+  "clientresetpacket.pack.description": "客户端重置数据包资源",
+  "clientresetpacket.disconnect.reset_failed": "为切换服务器重置客户端失败，正在关闭连接",
+  "clientresetpacket.toast.title": "切换服务器",
+  "clientresetpacket.toast.shaders_paused": "切换服务器期间已暂时关闭光影",
+  "clientresetpacket.toast.shaders_restored": "光影已重新开启",
+  "clientresetpacket.toast.shaders_restore_failed": "无法重新开启光影，请在光影设置中手动开启。"
+}

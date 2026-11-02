@@ -1,0 +1,8 @@
+{
+  "clientresetpacket.pack.description": "Client Reset Packet resources",
+  "clientresetpacket.disconnect.reset_failed": "Failed to reset the client for the server switch, closing connection",
+  "clientresetpacket.toast.title": "Server switch",
+  "clientresetpacket.toast.shaders_paused": "Shaders paused while switching servers",
+  "clientresetpacket.toast.shaders_restored": "Shaders turned back on",
+  "clientresetpacket.toast.shaders_restore_failed": "Couldn't turn shaders back on. Re-enable them in the shader settings."
+}
