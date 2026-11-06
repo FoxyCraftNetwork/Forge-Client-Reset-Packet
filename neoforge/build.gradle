@@ -1,0 +1,34 @@
+apply plugin: 'net.neoforged.moddev'
+
+neoForge {
+    version = '21.1.265'
+
+    runs {
+        client {
+            client()
+            gameDirectory = project.file('run')
+        }
+    }
+
+    mods {
+        clientresetpacket {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand 'version': project.version
+    }
+}
+
+jar {
+    manifest.attributes(
+            'Implementation-Title'  : rootProject.name,
+            'Implementation-Version': project.version
+    )
+}
+
+build.finalizedBy('versionedRelease')
