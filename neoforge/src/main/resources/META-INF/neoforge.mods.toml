@@ -16,6 +16,8 @@ description='''
 Makes proxy server switches (Velocity and similar) behave like a clean reconnect on NeoForge clients.
 
 On Minecraft 1.20.2+ the proxy switches servers through the vanilla configuration phase. This mod resets the client-side NeoForge state that a real disconnect would reset (synced registries, negotiated network channels and packet filters, logout event) so the next backend can be NeoForge, another modded server or vanilla/Paper, and pauses Iris shaders across the switch.
+
+When the server does not speak NeoForge, the client stays connected past NeoForge's vanilla-server negotiation refusal. Mods that require NeoForge on the server are not made compatible.
 '''
 
 [[mixins]]

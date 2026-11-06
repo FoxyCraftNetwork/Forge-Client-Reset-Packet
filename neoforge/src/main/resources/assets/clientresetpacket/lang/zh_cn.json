@@ -4,5 +4,6 @@
   "clientresetpacket.toast.title": "切换服务器",
   "clientresetpacket.toast.shaders_paused": "切换服务器期间已暂时关闭光影",
   "clientresetpacket.toast.shaders_restored": "光影已重新开启",
-  "clientresetpacket.toast.shaders_restore_failed": "无法重新开启光影，请在光影设置中手动开启。"
+  "clientresetpacket.toast.shaders_restore_failed": "无法重新开启光影，请在光影设置中手动开启。",
+  "clientresetpacket.toast.vanilla_hub": "该服务器未运行 NeoForge。仍将继续加入；需要服务端安装 NeoForge 的模组可能无法正常工作。"
 }

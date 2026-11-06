@@ -5,7 +5,12 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
-    "MixinClientPacketListener"
+    "MixinClientPacketListener",
+    "MixinNetworkRegistry",
+    "MixinCheckExtensibleEnums",
+    "MixinCheckFeatureFlags",
+    "MixinClientCommonPacketListener",
+    "MixinConnection"
   ],
   "injectors": {
     "defaultRequire": 1

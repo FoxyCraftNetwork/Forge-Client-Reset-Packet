@@ -20,6 +20,10 @@ import net.neoforged.neoforge.common.NeoForge;
  * one. That is what breaks switches between NeoForge and vanilla backends. {@link ReconfigurationReset} puts all of that
  * back to the state of a fresh connection at the start of every switch.</p>
  *
+ * <p>Separately, a NeoForge client that still has mods with required network channels is disconnected while joining a
+ * vanilla or other non-NeoForge server, before any re-configuration packet exists. {@link VanillaHubBypass} lets that
+ * configuration finish. It never runs for a peer that speaks NeoForge's own negotiation.</p>
+ *
  * <p>Client-only: the entry point is only constructed on the physical client, and the mod is not needed on the
  * server (see {@code displayTest} in neoforge.mods.toml).</p>
  */

@@ -43,6 +43,9 @@ public final class ReconfigurationReset {
 
 	/** Render thread, right before {@code Minecraft#clearClientLevel} during re-configuration. */
 	public static void beforeClear(Minecraft mc, Connection connection) {
+		// The next backend negotiates from scratch. Forget a vanilla-hub bypass from the server we are leaving
+		// before that negotiation, so a NeoForge backend is not treated as vanilla.
+		VanillaHubBypass.clear(connection);
 		ClientReset.logger.info(ClientReset.RESETMARKER, "Server asked the client to re-configure (proxy server switch); resetting client state.");
 		// Shaders off before the level and render pipeline are torn down (issues #3/#12).
 		OculusCompat.beforeClear();
